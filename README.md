@@ -27,7 +27,7 @@ aspektów implementacji. Opis funkcjonalności opracowanej aplikacji
 
 ## Architektura systemu
 
-![](../projekt.png)
+![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/projekt.png)
 
 ## Symulowane urządzenia
 Stworzyłem kilka rodzajów urządzeń
