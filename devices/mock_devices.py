@@ -1,5 +1,5 @@
 from enum import IntEnum
-from random import random, choice
+from random import random, choice, randint
 
 class AlarmMode(IntEnum):
     LOUD = 0
@@ -47,11 +47,11 @@ def generate_chainsaw_value(self, _) -> str:
 
 def generate_fan_value(self, mode) -> str:
     if mode == FanMode.DEFAULT:
-        return '6000'
+        return str(randint(5976, 6452)) 
     if mode == FanMode.FAST:
-        return '10000'
+        return str(randint(9763, 12234)) 
     if mode == FanMode.SLOW:
-        return '3000'
+        return str(randint(2364, 3452)) 
     raise ValueError('Invalid mode')
 
 def generate_alarm_value(self, mode) -> str:
