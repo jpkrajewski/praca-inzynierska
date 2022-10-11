@@ -31,7 +31,7 @@ aspektów implementacji. Opis funkcjonalności opracowanej aplikacji
 
 ## Symulowane urządzenia
 Stworzyłem kilka rodzajów urządzeń. Wszystkie urządzenia dziedziczą od bazowej klasy BaseDevice i za pomocą kompozycji z generatorem wartości tworzą konkretne urządzenia. Wartości generowane są losowo zgodnie z podanym zakresem oraz typem jaki mają zwracać.
-
+<br>
 ![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/uml%20device.png)
 #
 * **Termometr** - Urządzenie to wysyła temperaturę temperatury z zakresu 30 - 35 stopni, ma trzy tryby:
