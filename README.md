@@ -31,6 +31,7 @@ aspektów implementacji. Opis funkcjonalności opracowanej aplikacji
 
 ## Symulowane urządzenia
 Stworzyłem kilka rodzajów urządzeń. Wszystkie urządzenia dziedziczą od bazowej klasy BaseDevice i za pomocą kompozycji z generatorem wartości tworzą konkretne urządzenia. Wartości generowane są losowo zgodnie z podanym zakresem oraz typem jaki mają zwracać.
+
 ![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/uml%20device.png)
 #
 * **Termometr** - Urządzenie to wysyła temperaturę temperatury z zakresu 30 - 35 stopni, ma trzy tryby:
@@ -80,7 +81,7 @@ Aplikacja Flask postawiona na serverze AWS, instancja EC2, Linux ubuntu.
 ### Funkcjonalność
 * Odbiera wiadomości od urządzeń i zapisuje je do bazy danych
 * Odbiera wiadomości od aplikacji Kivy (zmiana trybu pracy) i wysyła je do urządzeń
-* Wysyła wysztkie ptrzebne dane konfiguracyjne do aplkacji Kivy oraz symulowanych urządzeń
+* Wysyła wyszystkie potrzebne dane konfiguracyjne do aplikacji Kivy oraz symulowanych urządzeń
 
 ### Endpointy
 Wszystkie endpoint udokumentowałem w Postman Doc, który znajduje się pod tym linkiem:
