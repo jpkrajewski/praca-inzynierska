@@ -3,6 +3,7 @@
 config.json
 venv
 .idea
+.vscode
 .__pycache__
 # Byte-compiled / optimized / DLL files
 __pycache__/
