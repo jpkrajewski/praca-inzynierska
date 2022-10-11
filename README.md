@@ -30,9 +30,10 @@ aspektów implementacji. Opis funkcjonalności opracowanej aplikacji
 ![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/projekt.png)
 
 ## Symulowane urządzenia
-Stworzyłem kilka rodzajów urządzeń
+Stworzyłem kilka rodzajów urządzeń. Wszystkie urządzenia dziedziczą od bazowej klasy BaseDevice i za pomocą kompozycji z generatorem wartości tworzą konkretne urządzenia. Wartości generowane są losowo zgodnie z podanym zakresem oraz typem jaki mają zwracać.
+![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/uml%20device.png)
+#
 * **Termometr** - Urządzenie to wysyła temperaturę temperatury z zakresu 30 - 35 stopni, ma trzy tryby:
-
     1. wysyła temperaturę w skali Celcjusza, 
     2. wysyła temperaturę w skali Fahrenheita, 
     3. wysyła temperaturę w skali Kelvina.
@@ -51,7 +52,6 @@ Stworzyłem kilka rodzajów urządzeń
     >>> "RPM/7000"
 ```
 * **Wiatrak** - Urządzenie to symuluje obroty zakresie ~2000 - 10000 i je wysyła w zależności od trybu pracy:
-
     1. symuluje obroty w zakresie ~2000 
     2. symuluje obroty w zakresie ~6000 
     3. symuluje obroty w zakresie ~10000
@@ -83,4 +83,6 @@ Aplikacja Flask postawiona na serverze AWS, instancja EC2, Linux ubuntu.
 * Wysyła wysztkie ptrzebne dane konfiguracyjne do aplkacji Kivy oraz symulowanych urządzeń
 
 ### Endpointy
-
+Wszystkie endpoint udokumentowałem w Postman Doc, który znajduje się pod tym linkiem:
+<br>
+https://documenter.getpostman.com/view/13647202/2s83zjsPPH
