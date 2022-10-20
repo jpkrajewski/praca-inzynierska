@@ -21,12 +21,13 @@ class LightMode(IntEnum):
     BLUE = 2
 
 def generate_light_value(self, mode) -> str:
+    r = randint(699, 703)
     if mode == LightMode.RED:
-        return '700-RED'
+        return f'{r}-RED'
     if mode == LightMode.GREEN:
-        return '700-GREEN'
+        return f'{r}-GREEN'
     if mode == LightMode.BLUE:
-        return '700-BLUE'
+        return f'{r}-BLUE'
     raise ValueError('Invalid mode')
      
 def generate_thermometer_value(self, mode) -> str:
@@ -54,7 +55,7 @@ def generate_fan_value(self, mode) -> str:
         return str(randint(2364, 3452)) 
     raise ValueError('Invalid mode')
 
-def generate_alarm_value(self, mode) -> str:
+def generate_alarm_value(self, _) -> str:
     return choice(['ON', 'OFF'])
 
 class BaseDevice:
@@ -65,21 +66,31 @@ class BaseDevice:
     _unit = None
     _value_generator = None
 
-    def __init__(self, topic:str,  state:str="ON", mode:int=0):
+    def __init__(self, topic:str, mode:int) -> None:
         self._topic = topic
-        self._state = state
         self.mode = mode
 
     @property
-    def info(self):
+    def info(self) -> str:
         return f'{self._get_unit()}/{self._value_generator(self.mode)}'
 
     @property
-    def topic(self):
+    def topic(self) -> str:
         return self._topic
+
+    @property
+    def mode(self) -> int:
+        return self._mode
+
+    @mode.setter
+    def mode(self, value) :
+        self._mode = value
 
     def _get_unit(self):
         return self._unit[self.mode]
+
+    def __str__(self) -> str:
+        return f'{self.topic}: {self.mode}, {self._get_unit()}'
 
 class Thermometer(BaseDevice):
     _unit = ['CELCIUS', 'FAHRENHEIT', 'KELVIN']
@@ -89,21 +100,38 @@ class Saw(BaseDevice):
     _unit = ['RPM']
     _value_generator = generate_chainsaw_value
 
+    def _get_unit(self):
+        return self._unit[0]
+
 class Sensor(BaseDevice):
     _unit = ['DETECTED']
     _value_generator = generate_sensor_value
+
+    def _get_unit(self):
+        return self._unit[0]
 
 class Fan(BaseDevice):
     _unit = ['RPM']
     _value_generator = generate_fan_value
 
+    def _get_unit(self):
+        return self._unit[0]
+
 class Light(BaseDevice):
     _unit = ['LUMEN']
     _value_generator = generate_light_value
 
+    def _get_unit(self):
+        return self._unit[0]
+
 class Alarm(BaseDevice):
     _unit = ['LOUD', 'SILENT']
     _value_generator = generate_alarm_value
+
+    def _get_unit(self):
+        if self.mode == 2:
+            return self._unit[0]
+        return self._unit[self.mode]
 
 class DeviceFactory:
     """Factory for devices"""
@@ -111,9 +139,9 @@ class DeviceFactory:
     def __init__(self, devices: list):
         self.devices = devices
     
-    def _create(self, type: str, topic: str) -> BaseDevice:
+    def _create(self, type:str, topic:str, mode:int) -> BaseDevice:
         if type in self._scope:
-            return globals()[type](topic)
+            return globals()[type](topic, mode)
         raise ValueError(f'Unknown device type {type}')
 
     def create_devices(self) -> list:

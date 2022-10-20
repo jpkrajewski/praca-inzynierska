@@ -1,6 +1,6 @@
 from datetime import datetime as dt
+import dateutil.relativedelta
 from config import Config, JSONParser
-
 from flask import Flask
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -39,7 +39,8 @@ class Device(db.Model):
     @property
     def config_dict(self):
         return dict(topic=f'{self.topic}{self.token}',
-                    type=self.type)
+                    type=self.type,
+                    mode=self.mode)
 
     @property
     def serialized(self):
@@ -50,6 +51,9 @@ class Device(db.Model):
     
     @property
     def full_topic(self):
+        return f'{self.topic}{self.token}'
+
+    def __str__(self) -> str:
         return f'{self.topic}{self.token}'
 
 class Measurement(db.Model):
@@ -63,7 +67,26 @@ class Measurement(db.Model):
     def serialized(self):
         return dict(unit=self.unit,
                     value=str(self.value),
-                    datetime=str(self.datetime))
+                    datetime=self.datetime.strftime(DATETIME_FORMAT_API))
+
+    def get_value(self):
+        if self.unit == 'RPM':
+            return int(self.value)
+        
+        if self.unit in ['DETECTED', 'LUMEN', 'LOUD', 'SILENT']:
+            return self.value
+
+        if self.unit == 'CELSIUS':
+            return self.value
+
+        if self.unit == 'FAHRENHEIT':
+            return (self.value - 32) / 1.8
+
+        if self.unit == 'KELVIN':
+            return self.value - 273.15
+
+    def __str__(self) -> str:
+        return f'{self.unit}: {self.value} {self.datetime}'
 
 def decode_to_dict(message, now):
     values = message.split('/') + [now]
@@ -78,18 +101,26 @@ def handle_connect(client, userdata, flags, rc):
 
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
-    global MEASUREMENTS_COUNTER
-    MEASUREMENTS_COUNTER += 1
-    if MEASUREMENTS_COUNTER == MEASUREMENTS_SAVE_ONE_PER:
-        MEASUREMENTS_COUNTER = 0
-        device = Device.query.filter_by(token=message.topic.split('/')[-1]).first()
-        measurement = Measurement(**decode_to_dict(message=message.payload.decode('utf-8'), now=dt.now()), device_id=device.id)
-        db.session.add(measurement)
-        db.session.commit()
-        print(device, measurement)
+    device = Device.query.filter_by(token=message.topic.split('/')[-1]).first()
+    if 'mode' in message.payload.decode('utf-8'):
+        return
+    else:
+        global MEASUREMENTS_COUNTER
+        MEASUREMENTS_COUNTER += 1
+        if MEASUREMENTS_COUNTER == MEASUREMENTS_SAVE_ONE_PER:
+            MEASUREMENTS_COUNTER = 0
+            measurement = Measurement(**decode_to_dict(message=message.payload.decode('utf-8'), now=dt.now()), device_id=device.id)
+            db.session.add(measurement)
+            db.session.commit()
 
 def _get_devices():
     return [d.config_dict for d in Device.query.all()]
+
+def _get_devices_gui():
+    return [d.serialized for d in Device.query.all()]
+
+def _get_distinct_topics():
+    return [d[0] for d in db.session.query(Device.topic).distinct()]
 
 @app.route('/api/config/', methods=['GET'])
 def get_config():
@@ -97,12 +128,41 @@ def get_config():
                     'port': int(config['MQTT_BROKER_PORT']),
                     'devices': _get_devices()})
 
+@app.route('/api/config-gui/', methods=['GET'])
+def get_config_gui():
+    return jsonify({'host': config['MQTT_BROKER_URL'],
+                    'port': int(config['MQTT_BROKER_PORT']),
+                    'devices': _get_devices_gui(),
+                    'topics': _get_distinct_topics()})
+
 @app.route('/api/device/<string:token>/measurements/today/', methods=['GET'])
 def device_measurements_today(token):
     device = Device.query.filter_by(token=token).first_or_404()
     day_start = dt.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    measurements = Measurement.query.filter_by(device_id=device.id).filter(Measurement.datetime >= day_start).all()
-    return jsonify({'device': device.serialized, 'measurments': [m.serialized for m in measurements]}, 200)
+    measurements = Measurement.query.filter_by(device_id=device.id).filter(Measurement.datetime >= day_start, Measurement.unit != 'mode').all()
+    print(measurements)
+    modes = Measurement.query.filter_by(device_id=device.id).filter(Measurement.datetime >= day_start, Measurement.unit == 'mode').limit(20).all()
+    worktime = Measurement.query.filter_by(device_id=device.id).order_by(Measurement.datetime.asc()).first()
+    dt1 = dt.now() 
+    dt2 = worktime.datetime
+    rd = dateutil.relativedelta.relativedelta(dt1, dt2)
+    print(f'{rd.months} months, {rd.days} days, {rd.hours} hours, {rd.minutes} minutes')
+    if len(measurements) == 0 or isinstance(measurements[0].get_value(), str):
+        avg = 'N/A'
+        max_v = 'N/A'
+        min_v = 'N/A'
+    else:
+        avg = sum([m.get_value() for m in measurements]) / len(measurements)
+        max_v = max([m.get_value() for m in measurements])
+        min_v = min([m.get_value() for m in measurements])
+
+    return jsonify({'device': device.serialized, 
+                    'measurments': [m.serialized for m in measurements[:20]],
+                    'modes': [m.serialized for m in modes],
+                    'avg': avg,
+                    'max': max_v,
+                    'min': min_v,
+                    'worktime': f'{rd.months} months, {rd.days} days, {rd.hours} hours, {rd.minutes} minutes'})
 
 @app.route('/api/device/<string:token>/measurements/date/<string:_from>/<string:to>/', methods=['GET'])
 def device_measurements_by_date(token:str, _from:str, to:str):
@@ -115,13 +175,19 @@ def device_measurements_by_date(token:str, _from:str, to:str):
 @app.route('/api/device/<string:token>/', methods=['GET'])
 def device_info(token:str):
     device = Device.query.filter_by(token=token).first_or_404()
-    return jsonify({'device': device.serialized}, 200)
+    return jsonify({'device': device.serialized})
 
 @app.route('/api/device/<string:token>/mode/<int:mode>/', methods=['POST'])
 def change_mode(token:str, mode:int):
-    device = Device.query.first_or_404(db.select(Device).filter_by(token=token))
-    mqtt.publish(device.full_topic, f'mode={mode}')
-    return jsonify({'device': token, 'mode': mode}, 200)
+    if mode not in (0, 1, 2):
+        return jsonify({'message': 'Mode must be 0, 1 or 2'}), 400
+    device = device = Device.query.filter_by(token=token).first_or_404()
+    device.mode = mode
+    measurement = Measurement(unit='mode', value=mode, datetime=dt.now(), device_id=device.id)
+    db.session.add(measurement)
+    db.session.commit()
+    mqtt.publish(topic=device.full_topic, payload=f'mode={mode}', qos=2)
+    return jsonify({'device': token, 'mode': mode})
 
 @app.route("/")
 def hello_world():
