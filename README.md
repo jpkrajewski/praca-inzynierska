@@ -87,3 +87,19 @@ Aplikacja Flask postawiona na serverze AWS, instancja EC2, Linux ubuntu.
 Wszystkie endpoint udokumentowałem w Postman Doc, który znajduje się pod tym linkiem:
 <br>
 https://documenter.getpostman.com/view/13647202/2s83zjsPPH
+
+## Kivy Graficzny interfejs użytkownika
+Aplikacja posiada 3 widoki:
+* Widok główny - wyświetla wszystkie dostępne tematy MQTT
+* Widok tematu - wyświetla wszystkie wiadomości z danego tematu, oraz umożliwia wysyłanie wiadomości do urządzeń, w tym przypadku zmiana trybu pracy
+* Widok urządzenia - wyświetla wszystkie wiadomości z danego urządzenia, z datami. Date zmiany trybu, jeśli urządzenia wysyła dane policzalne (np. temperatura, obroty) widok ten wyświetla średnia z dnia, maksymalną i minimalną wartość z dnia. Ponadto wyświetla czas pracy urządzenia.
+
+### Widok główny
+![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/gui_menu.png)
+
+### Widok tematu
+![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/gui_topic.png)
+
+### Widok urządzenia
+![](https://raw.githubusercontent.com/jpkrajewski/praca-inzynierska/main/docs/gui_device.png)
+

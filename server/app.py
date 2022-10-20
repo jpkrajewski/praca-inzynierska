@@ -65,25 +65,44 @@ class Measurement(db.Model):
 
     @property
     def serialized(self):
+        value = self.get_value_to_serialize()
+        if isinstance(value, float):
+            value = round(value, 5)
         return dict(unit=self.unit,
-                    value=str(self.value),
+                    value=value,
                     datetime=self.datetime.strftime(DATETIME_FORMAT_API))
 
-    def get_value(self):
+    def get_value_to_serialize(self):
         if self.unit == 'RPM':
-            return int(self.value)
+            return float(self.value)
         
         if self.unit in ['DETECTED', 'LUMEN', 'LOUD', 'SILENT']:
             return self.value
 
         if self.unit == 'CELSIUS':
-            return self.value
+            return float(self.value)
 
         if self.unit == 'FAHRENHEIT':
-            return (self.value - 32) / 1.8
+            return float(self.value)
 
         if self.unit == 'KELVIN':
-            return self.value - 273.15
+            return float(self.value)
+
+    def get_value(self):
+        if self.unit == 'RPM':
+            return float(self.value)
+        
+        if self.unit in ['DETECTED', 'LUMEN', 'LOUD', 'SILENT']:
+            return self.value
+
+        if self.unit == 'CELCIUS':
+            return float(self.value)
+
+        if self.unit == 'FAHRENHEIT':
+            return (float(self.value) - 32) / 1.8
+
+        if self.unit == 'KELVIN':
+            return float(self.value) - 273.15
 
     def __str__(self) -> str:
         return f'{self.unit}: {self.value} {self.datetime}'
