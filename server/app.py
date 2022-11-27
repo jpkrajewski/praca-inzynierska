@@ -76,10 +76,10 @@ class Measurement(db.Model):
         if self.unit == 'RPM':
             return float(self.value)
         
-        if self.unit in ['DETECTED', 'LUMEN', 'LOUD', 'SILENT']:
+        if self.unit in ['DETECTED', 'LUMEN', 'LOUD', 'SILENT', 'mode']:
             return self.value
 
-        if self.unit == 'CELSIUS':
+        if self.unit == 'CELCIUS':
             return float(self.value)
 
         if self.unit == 'FAHRENHEIT':
@@ -161,6 +161,7 @@ def device_measurements_today(token):
     measurements = Measurement.query.filter_by(device_id=device.id).filter(Measurement.datetime >= day_start, Measurement.unit != 'mode').all()
     print(measurements)
     modes = Measurement.query.filter_by(device_id=device.id).filter(Measurement.datetime >= day_start, Measurement.unit == 'mode').limit(20).all()
+    print([m.value for m in modes])
     worktime = Measurement.query.filter_by(device_id=device.id).order_by(Measurement.datetime.asc()).first()
     dt1 = dt.now() 
     dt2 = worktime.datetime
@@ -171,9 +172,10 @@ def device_measurements_today(token):
         max_v = 'N/A'
         min_v = 'N/A'
     else:
-        avg = sum([m.get_value() for m in measurements]) / len(measurements)
-        max_v = max([m.get_value() for m in measurements])
-        min_v = min([m.get_value() for m in measurements])
+        m_list = [m.get_value() for m in measurements]
+        avg = sum(m_list) / len(measurements)
+        max_v = max(m_list)
+        min_v = min(m_list)
 
     return jsonify({'device': device.serialized, 
                     'measurments': [m.serialized for m in measurements[:20]],
